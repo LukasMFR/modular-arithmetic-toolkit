@@ -27,7 +27,8 @@ Ce programme regroupe dans un même fichier Python plusieurs outils de base en *
 - Résolution d’**équations linéaires modulaires**
 - Génération de **tables en Z et Zₙ**
 - Application du **théorème des restes chinois (CRT)** pour des systèmes à modules copremiers
-- Calcul de **puissances modulo m**
+- Calcul de **puissances modulo m**  
+  **→ avec réduction automatique de l’exposant par le théorème de Fermat lorsque m est premier**
 - **Décomposition en facteurs premiers** (méthode de l’échelle)
 
 Le script est conçu pour être **auto-suffisant**, pédagogique, et fonctionner sans dépendance externe.
@@ -44,7 +45,7 @@ Le script est conçu pour être **auto-suffisant**, pédagogique, et fonctionner
 | 4 | **Équations modulaires** | Résout `a x ≡ b [m]`, `a x + c ≡ b [m]`, `x + c ≡ b [m]` avec mise en forme automatique. | `4x + 5 ≡ 0 [21]` |
 | 5 | **Tables Z / Zₙ** | Affiche la table d’addition ou de multiplication sur un intervalle ou modulo n. | `Z₇* = {1,2,3,4,5,6}` |
 | 6 | **CRT (formule directe)** | Résout un système de congruences copremières avec la formule du théorème des restes chinois. | `x ≡ 7 [10], x ≡ 3 [7], x ≡ 6 [13] → x ≡ 227 [910]` |
-| 7 | **Puissance mod m** | Calcule `a^e mod m` étape par étape (méthode de décomposition binaire). | `3¹³ mod 17` |
+| 7 | **Puissance mod m** | Calcule `a^e mod m` étape par étape (décomposition binaire) **avec réduction Fermat si applicable**. | `3¹³ mod 17` |
 
 ---
 
@@ -84,8 +85,16 @@ Le script ne relance pas le menu après une opération (version “one-shot”),
   \[
   x ≡ \sum a_i M_i y_i \pmod{M}
   \]
-  où \( M_i = M/m_i \) et \( y_i = M_i^{-1} \pmod{m_i} \)
-- **Méthode de décomposition binaire** pour le calcul de puissances modulaires rapides.
+- **Méthode de décomposition binaire** pour le calcul de puissances.
+- **Théorème de Fermat** ajouté dans l’option 7 :  
+  si `m` est premier et `gcd(a,m)=1`  
+  \[
+  a^{m-1} ≡ 1 \pmod{m}
+  \]
+  donc  
+  \[
+  a^e ≡ a^{\,e \bmod (m-1)} \pmod{m}
+  \]
 
 ---
 
@@ -93,15 +102,8 @@ Le script ne relance pas le menu après une opération (version “one-shot”),
 
 - ✅ Compatible **Epsilon / Upsilon Custom / Omega / Khi**
 - ✅ Testé sur modèle **N0110**
-- ⚙️ Taille maximale recommandée : **~30 Ko**
-- ⚠️ Pas de boucle principale (`while True:`) pour préserver la mémoire.
-
-### 📦 Import
-Copiez le fichier dans le dossier Python de votre NumWorks (ou via Epsilon Online)  
-et exécutez simplement :
-```python
-menu()
-````
+- ⚙️ Taille max recommandée : **~30 Ko**
+- ⚠️ Version *one-shot* : pas de boucle infinie (gain RAM)
 
 ---
 
@@ -134,8 +136,8 @@ x0 = 227
 
 ## 👨‍💻 Auteur
 
-**Lukas Mauffré**
-Étudiant à l’ECE Paris — Passionné de mathématiques, d’algorithmique et de NumWorks.
+**Lukas Mauffré**  
+Étudiant à l’ECE Paris — Passionné de mathématiques, d’algorithmique et de NumWorks.  
 Version : *menu “one-shot”, allégée pour NumWorks (RAM 32 Ko)*
 
 ---
