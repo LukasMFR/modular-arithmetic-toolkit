@@ -492,10 +492,8 @@ def pow_mod_verbose(a, e, m):
 
     # Helpers d'affichage compacts
     def small_rep(x, mod):
-        y = x % mod
-        if y > mod // 2:
-            return str(y - mod)  # ex: 11 -> -3 (si m=14)
-        return str(y)
+        # Toujours le reste positif dans [0, mod-1]
+        return str(x % mod)
 
     def power2_repr(a_sym, k):
         if k == 0:
