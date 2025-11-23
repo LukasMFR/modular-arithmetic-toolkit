@@ -4,7 +4,7 @@
 #  - PGCD / Bézout (Euclide étendu + remontée)
 #  - Inverse modulaire (avec étapes)
 #  - Équations modulaires (ax ≡ b [m])
-#  - Tables d’addition/multiplication en Z et Z_n (+ Z_n et Z_n*)
+#  - Tables d'addition/multiplication en Z et Z_n (+ Z_n et Z_n*)
 #  - Théorème des restes chinois (CRT) pour systèmes copremiers
 #  - Puissance mod m
 #  Auteur : toi ;)
@@ -472,7 +472,7 @@ def pow_mod_verbose(a, e, m):
             s = "({}^2)".format(s)
         return s
 
-    # 1) Écriture de l’exposant en base 2
+    # 1) Écriture de l'exposant en base 2
     bits = []
     k = 0
     t = e
@@ -486,7 +486,7 @@ def pow_mod_verbose(a, e, m):
     # Sommes numériques et en puissances de 2
     somme_num = " + ".join(str(1 << k) for k in bits_desc)
     somme_pow2 = " + ".join("2^{}".format(k) for k in bits_desc)
-    print("\n1) Écriture de l’exposant en base 2")
+    print("\n1) Écriture de l'exposant en base 2")
     print("{} = {} = {}".format(e, somme_num, somme_pow2))
 
     # 2) Décomposition de la puissance
@@ -602,7 +602,7 @@ def show_factorization_and_option_gcd():
     else:
         print("PGCD({}, {}) = 1".format(n1, n2))
 
-# ---------- Wrappers de saisie (fonctions d’entrée utilisateur) ----------
+# ---------- Wrappers de saisie (fonctions d'entrée utilisateur) ----------
 def run_pgcd_bezout():
     sep("PGCD / Bézout")
     try:
