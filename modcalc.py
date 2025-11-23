@@ -457,6 +457,39 @@ def pow_mod_verbose(a, e, m):
     print("m = {}".format(m))
     print("\nObjectif : calculer {}^{}  [{}]".format(a, e, m))
 
+    # Réduction éventuelle de l'exposant par le th. de Fermat (m premier, gcd(a,m)=1)
+    # a^(m-1) ≡ 1 [m]  =>  a^e ≡ a^(e mod (m-1)) [m]
+    # (on ne le fait que si ça sert : e >= m-1)
+    orig_e = e
+    # petit test de primalité naïf (suffisant pour l'usage ici)
+    is_prime = True
+    if m < 2:
+        is_prime = False
+    else:
+        d = 2
+        while d * d <= m:
+            if m % d == 0:
+                is_prime = False
+                break
+            d += 1
+
+    if is_prime and gcd(a, m) == 1 and e >= (m - 1):
+        sep("Réduction de l'exposant (th. de Fermat)")
+        print("m = {} est premier et gcd({}, {}) = 1.".format(m, a, m))
+        print("On sait : {}^({}-1) ≡ 1  [ {} ]".format(a, m, m))
+        r = e % (m - 1)
+        q = e // (m - 1)
+        print("On écrit e = q*({}-1) + r avec e = {} :".format(m, orig_e))
+        print("{} = {} * {} + {}.".format(orig_e, q, m - 1, r))
+        print("Donc {}^{} ≡ {}^{}  [ {} ]".format(a, orig_e, a, r, m))
+        e = r
+        # Cas particulier : e multiple de (m-1)
+        if e == 0:
+            sep("Résultat")
+            print("{}^{} (mod {}) = 1".format(a, orig_e, m))
+            print("(Car l'exposant est multiple de {}-1 et {}^({}-1) ≡ 1 [ {} ])".format(m, a, m, m))
+            return
+
     # Helpers d'affichage compacts
     def small_rep(x, mod):
         y = x % mod
