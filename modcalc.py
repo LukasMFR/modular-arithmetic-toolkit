@@ -542,7 +542,6 @@ def pow_mod_verbose(a, e, m):
     for kk in range(1, max_k + 1):
         raw_sq = (prev_val * prev_val)
         new_val = raw_sq % m
-        # Affichage du palier kk en s'appuyant sur le palier kk-1 réduit
         print("- ({})^2  =>  ({}^2) = {}  =>  ≡ {}  [ {} ]".format(
             power2_repr(a, kk-1),
             small_rep(prev_val, m),
@@ -555,21 +554,17 @@ def pow_mod_verbose(a, e, m):
 
     # 4) Assemblage des facteurs utiles (bits à 1)
     print("\n4) Assemblage des facteurs utiles ({})".format(", ".join("2^{}".format(k) for k in bits_desc)))
-    # Ligne symbolique
     print("{}^{} ≡ {}  [ {} ]".format(
         a, e, " * ".join(power2_repr(a, k) for k in bits_desc), m
     ))
-    # Ligne numérique (représentants compacts)
     factors_str = " * ".join(small_rep(pow_values[k], m) for k in bits_desc)
     print("     ≡ {}  [ {} ]".format(factors_str, m))
 
     # Multiplication pas à pas
     acc = 1 % m
     if bits_desc:
-        # Premier facteur
         acc = pow_values[bits_desc[0]] % m
         print("     -> {} (premier facteur)".format(small_rep(acc, m)))
-        # Puis enchaînement
         for kk in bits_desc[1:]:
             before = acc
             acc = (acc * pow_values[kk]) % m
@@ -582,7 +577,7 @@ def pow_mod_verbose(a, e, m):
 
     # 5) Résultat
     sep("Résultat")
-    print("{}^{} (mod {}) = {}".format(a, e, m, acc))
+    print("{}^{} (mod {}) = {}".format(a, orig_e, m, acc))
     print("(Vérif rapide : {} % {} = {})".format(acc, m, acc % m))
 
 def show_factorization_and_option_gcd():
