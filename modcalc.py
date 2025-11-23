@@ -527,23 +527,29 @@ def pow_mod_verbose(a, e, m):
     droite_pow2 = " + ".join("2^{}".format(k) for k in bits_desc)
     print("{}^{} = {}^({})".format(a, e, a, droite_pow2))
     print("     = " + " * ".join("{}^(2^{})".format(a, k) for k in bits_desc))
-    print("     = " + " * ".join(power2_repr(a, k) for k in bits_desc))
 
-    # 3) Calculs modulo m (paliers de carrés)
+    # 3) Calculs modulo m (paliers)
     print("\n3) Calculs modulo {} (paliers)".format(m))
     pow_values = {}  # k -> a^(2^k) mod m
-    # k=0
+
+    # k = 0  →  a^(2^0) = a^1
     val = a % m
     pow_values[0] = val
-    print("- {} ≡ {}  [ {} ]".format(a, small_rep(a, m), m))
-    # k>=1
+    print("- {}^1 ≡ {}  [ {} ]".format(a, small_rep(a, m), m))
+
+    # k >= 1  → a^(2^k) = (a^(2^{k-1}))^2
     max_k = bits_desc[0] if bits_desc else 0
     prev_val = val
     for kk in range(1, max_k + 1):
-        raw_sq = (prev_val * prev_val)
+        raw_sq = prev_val * prev_val
         new_val = raw_sq % m
-        print("- ({})^2  =>  ({}^2) = {}  =>  ≡ {}  [ {} ]".format(
-            power2_repr(a, kk-1),
+        exp_prev = 1 << (kk - 1)
+        exp_cur = 1 << kk
+        print("- {}^{} = ({}^{})^2  =>  ({}^2) = {}  =>  ≡ {}  [ {} ]".format(
+            a,
+            exp_cur,
+            a,
+            exp_prev,
             small_rep(prev_val, m),
             raw_sq,
             small_rep(new_val, m),
@@ -555,7 +561,7 @@ def pow_mod_verbose(a, e, m):
     # 4) Assemblage des facteurs utiles (bits à 1)
     print("\n4) Assemblage des facteurs utiles ({})".format(", ".join("2^{}".format(k) for k in bits_desc)))
     print("{}^{} ≡ {}  [ {} ]".format(
-        a, e, " * ".join(power2_repr(a, k) for k in bits_desc), m
+        a, e, " * ".join("{}^(2^{})".format(a, k) for k in bits_desc), m
     ))
     factors_str = " * ".join(small_rep(pow_values[k], m) for k in bits_desc)
     print("     ≡ {}  [ {} ]".format(factors_str, m))
