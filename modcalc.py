@@ -545,13 +545,12 @@ def pow_mod_verbose(a, e, m):
         new_val = raw_sq % m
         exp_prev = 1 << (kk - 1)
         exp_cur = 1 << kk
-        print("- {}^{} = ({}^{})^2  =>  ({}^2) = {}  =>  ≡ {}  [ {} ]".format(
+        print("- {}^{} = ({}^{})^2  =>  ({}^2) ≡ {}  [ {} ]".format(
             a,
             exp_cur,
             a,
             exp_prev,
             small_rep(prev_val, m),
-            raw_sq,
             small_rep(new_val, m),
             m
         ))
