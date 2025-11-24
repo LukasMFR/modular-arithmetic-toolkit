@@ -1,9 +1,9 @@
-# Bézout, inverse modulaire et congruences (NumWorks)
+# Bézout, inverse modulaire et congruences (calculatrice Python)
 
-Programme Python complet et optimisé pour **NumWorks**, dédié à l’étude des **équations et systèmes modulaires** en arithmétique.  
+Programme Python complet et optimisé pour **calculatrice Python**, dédié à l’étude des **équations et systèmes modulaires** en arithmétique.  
 Ce script permet de manipuler les congruences, le PGCD, les inverses modulaires, les puissances mod m, ainsi que le théorème des restes chinois (CRT).
 
-> 🧮 Version : **menu “one-shot”** — sans boucle continue, optimisée pour la mémoire RAM de la NumWorks (~32 Ko max).
+> 🧮 Version : **menu “one-shot”** — sans boucle continue, optimisée pour les environnements Python à mémoire limitée.
 
 ---
 
@@ -12,7 +12,7 @@ Ce script permet de manipuler les congruences, le PGCD, les inverses modulaires,
 2. [Fonctionnalités](#-fonctionnalités)
 3. [Structure du menu](#-structure-du-menu)
 4. [Méthodes utilisées](#-méthodes-utilisées)
-5. [Compatibilité NumWorks](#-compatibilité-numworks)
+5. [Compatibilité](#-compatibilité)
 6. [Exemples d’utilisation](#-exemples-dutilisation)
 7. [Auteur](#-auteur)
 
@@ -66,10 +66,10 @@ Lors de l’exécution, le programme affiche :
 7. Puissance mod m
 8. Quitter
 
-````
+```
 
 Chaque option exécute une fonction spécifique.  
-Le script ne relance pas le menu après une opération (version “one-shot”), ce qui permet d’économiser de la mémoire RAM sur la NumWorks.
+Le script ne relance pas le menu après une opération (version “one-shot”), ce qui permet d’économiser de la mémoire dans les environnements limités.
 
 ---
 
@@ -98,12 +98,11 @@ Le script ne relance pas le menu après une opération (version “one-shot”),
 
 ---
 
-## 🧩 Compatibilité NumWorks
+## 🧩 Compatibilité
 
-- ✅ Compatible **Epsilon / Upsilon Custom / Omega / Khi**
-- ✅ Testé sur modèle **N0110**
-- ⚙️ Taille max recommandée : **~30 Ko**
-- ⚠️ Version *one-shot* : pas de boucle infinie (gain RAM)
+* ✅ Compatible **Python standard**, MicroPython et environnements embarqués
+* ⚙️ Taille max recommandée : **~30 Ko**
+* ⚠️ Version *one-shot* : pas de boucle infinie (gain mémoire)
 
 ---
 
