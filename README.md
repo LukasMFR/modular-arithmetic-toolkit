@@ -136,8 +136,8 @@ x0 = 227
 ## 👨‍💻 Auteur
 
 **Lukas Mauffré**  
-Étudiant à l’ECE Paris — Passionné de mathématiques, d’algorithmique et de NumWorks.  
-Version : *menu “one-shot”, allégée pour NumWorks (RAM 32 Ko)*
+Étudiant à l’ECE Paris — Passionné de mathématiques, d’algorithmique et de développement Python.  
+Version : *menu “one-shot”, allégée pour environnements Python à mémoire réduite*
 
 ---
 
