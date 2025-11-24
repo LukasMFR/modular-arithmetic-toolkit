@@ -633,50 +633,6 @@ def show_factorization_and_option_gcd():
     else:
         print("PGCD({}, {}) = 1".format(n1, n2))
 
-def show_diffie_hellman_course():
-    print("--- Cours : Diffie-Hellman (échange de clé) ---")
-    print("Objectif :")
-    print("Permettre à deux personnes (Alice et Bob) de construire une même clé secrète,")
-    print("sans jamais envoyer cette clé sur le réseau.")
-    print()
-    print("Idée générale :")
-    print("- On travaille dans Z/pZ avec un grand nombre premier p.")
-    print("- On choisit un générateur g de (Z/pZ)*.")
-    print("- On utilise le fait qu’il est facile de calculer g^x (mod p),")
-    print("  mais très difficile de retrouver x à partir de g^x (logarithme discret).")
-    print()
-    print("1) Paramètres publics")
-    print("- Alice et Bob se mettent d’accord publiquement sur :")
-    print("  - un nombre premier p")
-    print("  - un générateur g")
-    print("- p et g sont publics (tout le monde peut les connaître).")
-    print()
-    print("2) Secrets privés")
-    print("- Alice choisit un entier secret a.")
-    print("- Bob choisit un entier secret b.")
-    print("- a et b restent privés.")
-    print()
-    print("3) Échanges publics")
-    print("- Alice calcule A = g^a (mod p) puis envoie A à Bob.")
-    print("- Bob calcule B = g^b (mod p) puis envoie B à Alice.")
-    print("- Un attaquant peut voir p, g, A, B, mais pas a ni b.")
-    print()
-    print("4) Construction de la clé commune")
-    print("- Alice calcule K_A = B^a (mod p).")
-    print("- Bob calcule K_B = A^b (mod p).")
-    print("- On a B^a = (g^b)^a = g^(ab) et A^b = (g^a)^b = g^(ab).")
-    print("  Donc : K_A = K_B = K (même clé secrète).")
-    print()
-    print("Résumé :")
-    print("- Clé commune K = g^(ab) (mod p).")
-    print("- La clé n’est jamais envoyée sur le réseau.")
-    print("- La sécurité repose sur la difficulté du logarithme discret.")
-    print()
-    print("Remarque de sécurité :")
-    print("- Le protocole de base ne protège pas contre une attaque \"Man-In-The-Middle\".")
-    print("- En pratique, on combine Diffie-Hellman avec une authentification")
-    print("  (certificats, signatures, etc.), par exemple dans TLS.")
-
 # ---------- Wrappers de saisie (fonctions d'entrée utilisateur) ----------
 def run_pgcd_bezout():
     sep("PGCD / Bézout")
@@ -754,8 +710,7 @@ def menu():
     print("5) Tables (Z / Z_n)")
     print("6) CRT (théorème des restes chinois)")
     print("7) Puissance mod m")
-    print("8) Cours : Diffie-Hellman (échange de clé)")
-    print("9) Quitter")
+    print("8) Quitter")
     choice = input("> Choix : ").strip()
 
     if choice == "1":
@@ -773,8 +728,6 @@ def menu():
     elif choice == "7":
         run_pow_mod()
     elif choice == "8":
-        show_diffie_hellman_course()
-    elif choice == "9":
         print("Quitter le programme.")
         return
     else:
