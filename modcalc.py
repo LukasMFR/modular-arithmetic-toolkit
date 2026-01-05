@@ -393,19 +393,18 @@ def solve_system_crt_coprime():
 def pow_mod_verbose(a, e, m):
     sep('Puissance mod m - méthode "décomposition binaire"')
 
-    # Garde-fous
     if m <= 0:
         print("Le module doit être > 0")
-        return
+        return None
     if e < 0:
         print("Exposant négatif non pris en charge.")
-        return
+        return None
     if e == 0:
         print("Objectif : calculer {}^0  [{}]".format(a, m))
         print("{}^0 ≡ 1  [{}]".format(a, m))
         sep("Résultat")
         print("{}^{} (mod {}) = {}".format(a, e, m, 1 % m))
-        return
+        return 1 % m
 
     print("a = {}".format(a))
     print("e = {}".format(e))
@@ -438,7 +437,7 @@ def pow_mod_verbose(a, e, m):
             sep("Résultat")
             print("{}^{} (mod {}) = 1".format(a, orig_e, m))
             print("(Car l'exposant est multiple de {}-1 et {}^({}-1) ≡ 1 [ {} ])".format(m, a, m, m))
-            return
+            return 1
 
     def small_rep(x, mod):
         return str(x % mod)
@@ -521,6 +520,7 @@ def pow_mod_verbose(a, e, m):
     sep("Résultat")
     print("{}^{} (mod {}) = {}".format(a, orig_e, m, acc))
     print("(Vérif rapide : {} % {} = {})".format(acc, m, acc % m))
+    return acc
 
 def show_factorization_and_option_gcd():
     sep("Décomp. facteurs premiers")
@@ -630,6 +630,273 @@ def run_pow_mod():
     except:
         print("Entrée invalide.")
 
+def _mul_mod_verbose(a, b, m, label=None):
+    if label:
+        sep(label)
+    prod = a * b
+    print("{} * {} = {}".format(a, b, prod))
+    r = prod % m
+    print("{} mod {} = {}".format(prod, m, r))
+    return r
+
+def _rsa_system(name, p, q, e):
+    sep("RSA - Paramètres {}".format(name))
+    print("p = {}, q = {}, e = {}".format(p, q, e))
+    n = p * q
+    phi = (p - 1) * (q - 1)
+    print("n = p*q = {}*{} = {}".format(p, q, n))
+    print("phi(n) = (p-1)(q-1) = {}*{} = {}".format(p-1, q-1, phi))
+    sep("Calcul de d : d ≡ e^(-1) [phi(n)]")
+    ok, d = inv_mod(e, phi, show=True)
+    if not ok:
+        print("ERREUR: e et phi(n) ne sont pas copremiers, RSA invalide.")
+        return None
+    sep("Clés {}".format(name))
+    print("Clé publique  : (n, e) = ({}, {})".format(n, e))
+    print("Clé privée    : (n, d) = ({}, {})".format(n, d))
+    return {"name": name, "p": p, "q": q, "n": n, "phi": phi, "e": e, "d": d}
+
+def _rsa_encrypt_for_bob(M, bob):
+    sep("RSA - Chiffrement pour Bob")
+    print("C(M) = M^e_B mod n_B")
+    print("M = {}, e_B = {}, n_B = {}".format(M, bob["e"], bob["n"]))
+    C = pow_mod_verbose(M, bob["e"], bob["n"])
+    return C
+
+def _rsa_decrypt_by_bob(C, bob):
+    sep("RSA - Déchiffrement par Bob")
+    print("M = C^d_B mod n_B")
+    print("C = {}, d_B = {}, n_B = {}".format(C, bob["d"], bob["n"]))
+    M = pow_mod_verbose(C, bob["d"], bob["n"])
+    return M
+
+def _rsa_sign_by_alice_on_cipher(Cm, alice):
+    sep("RSA - Signature par Alice (sur le chiffré)")
+    print("sigma = C(m)^(d_A) mod n_A")
+    print("C(m) = {}, d_A = {}, n_A = {}".format(Cm, alice["d"], alice["n"]))
+    sigma = pow_mod_verbose(Cm, alice["d"], alice["n"])
+    return sigma
+
+def _rsa_verify_by_bob(Cm, sigma, alice):
+    sep("RSA - Vérification de la signature (côté Bob)")
+    print("On vérifie : C(m) ?= sigma^(e_A) mod n_A")
+    print("C(m) = {}, sigma = {}, e_A = {}, n_A = {}".format(Cm, sigma, alice["e"], alice["n"]))
+    v = pow_mod_verbose(sigma, alice["e"], alice["n"])
+    sep("Conclusion vérif")
+    if v == (Cm % alice["n"]):
+        print("OK : {} == {} -> signature valide (message bien lié à Alice)".format(v, Cm % alice["n"]))
+    else:
+        print("NON : {} != {} -> signature invalide".format(v, Cm % alice["n"]))
+    return v
+
+def ds_rsa_ex1_run(choice):
+    pA, qA, eA = 11, 19, 7
+    pB, qB, eB = 13, 17, 5
+    M = 42
+    m = 2
+
+    alice = _rsa_system("Alice", pA, qA, eA)
+    bob   = _rsa_system("Bob",   pB, qB, eB)
+    if not alice or not bob:
+        return
+
+    if choice in ("1", "5"):
+        sep("Ex1 Q1+Q2 - Résumé à recopier")
+        print("Alice: n_A = {}, phi_A = {}, e_A = {}, d_A = {}".format(alice["n"], alice["phi"], alice["e"], alice["d"]))
+        print("Bob  : n_B = {}, phi_B = {}, e_B = {}, d_B = {}".format(bob["n"], bob["phi"], bob["e"], bob["d"]))
+
+    if choice in ("2", "5"):
+        sep("Ex1 Q3 - Chiffrer M=42 pour Bob")
+        C_M = _rsa_encrypt_for_bob(M, bob)
+        sep("Résultat Q3")
+        print("C(M) = {}".format(C_M))
+
+    if choice in ("3", "5"):
+        sep("Ex1 Q4 - m=2 + signature numérique (sur C(m))")
+        Cm = _rsa_encrypt_for_bob(m, bob)
+        sep("Chiffré du message m")
+        print("C(m) = {}".format(Cm))
+        sigma = _rsa_sign_by_alice_on_cipher(Cm, alice)
+        sep("Résultat Q4.1")
+        print("Signature sigma = {}".format(sigma))
+
+    if choice in ("4", "5"):
+        sep("Ex1 Q5 - Réception (déchiffrement + authenticité)")
+        Cm = _rsa_encrypt_for_bob(m, bob)
+        sigma = _rsa_sign_by_alice_on_cipher(Cm, alice)
+
+        sep("Q5.1 Déchiffrement")
+        m_back = _rsa_decrypt_by_bob(Cm, bob)
+        sep("Résultat Q5.1")
+        print("Message déchiffré = {}".format(m_back))
+
+        sep("Q5.2 Vérification signature")
+        _rsa_verify_by_bob(Cm, sigma, alice)
+
+def rsa_ds_menu():
+    sep("DS - EXERCICE 1 (RSA)")
+    print("1) Q1+Q2 (n, phi, clés)")
+    print("2) Q3 (chiffrer M=42 -> C(M))")
+    print("3) Q4 (m=2, calcul C(m) + signature)")
+    print("4) Q5 (déchiffrer + vérifier signature)")
+    print("5) Tout l'exercice 1")
+    print("6) Retour")
+    ch = input("> Choix : ").strip()
+    if ch in ("1", "2", "3", "4", "5"):
+        ds_rsa_ex1_run(ch)
+
+def _elgamal_public_y(g, a, p, who):
+    sep("ElGamal - Clé publique {}".format(who))
+    print("y = g^clé_privée mod p")
+    y = pow_mod_verbose(g, a, p)
+    return y
+
+def _elgamal_encrypt(M, p, g, a_alice, b_bob):
+    sep("ElGamal - Chiffrement (Ex2 Q2)")
+    print("p = {}, g = {}, M = {}".format(p, g, M))
+    print("Alice: a = {} ; Bob: b = {}".format(a_alice, b_bob))
+
+    yB = _elgamal_public_y(g, b_bob, p, "Bob (yB)")
+    sep("C1 = g^a mod p")
+    C1 = pow_mod_verbose(g, a_alice, p)
+
+    sep("s = (yB)^a mod p")
+    s_shared = pow_mod_verbose(yB, a_alice, p)
+
+    sep("C2 = M * s mod p")
+    C2 = _mul_mod_verbose(M, s_shared, p, label=None)
+
+    sep("Chiffré (C1, C2)")
+    print("(C1, C2) = ({}, {})".format(C1, C2))
+    return C1, C2, yB, s_shared
+
+def _elgamal_decrypt(C1, C2, p, b_bob):
+    sep("ElGamal - Déchiffrement (Ex2 Q3)")
+    print("s = C1^b mod p")
+    s = pow_mod_verbose(C1, b_bob, p)
+
+    sep("Inverse de s modulo p")
+    ok, s_inv = inv_mod(s, p, show=True)
+    if not ok:
+        print("ERREUR: s non inversible mod p (devrait être ok si p premier et s != 0).")
+        return None
+
+    sep("M = C2 * s^(-1) mod p")
+    M = _mul_mod_verbose(C2, s_inv, p, label=None)
+
+    sep("Résultat déchiffrement")
+    print("M = {}".format(M))
+    return M
+
+def _elgamal_signature(M, p, g, a_alice, k):
+    sep("ElGamal - Signature (Ex2 Q4/Q5)")
+    print("On signe M = {}".format(M))
+    print("Paramètres: p = {}, g = {}, a (priv Alice) = {}, k = {}".format(p, g, a_alice, k))
+    pm1 = p - 1
+
+    sep("Q4 - Inversibilité de k mod (p-1)")
+    print("On travaille modulo p-1 = {}".format(pm1))
+    ok, k_inv = inv_mod(k, pm1, show=True)
+    if not ok:
+        print("k n'est pas inversible modulo p-1 -> choisir un autre k.")
+        return None, None, None
+
+    sep("r = g^k mod p")
+    r = pow_mod_verbose(g, k, p)
+
+    sep("Calcul de (M - a*r) mod (p-1)")
+    ar = (a_alice * r) % pm1
+    val = (M - a_alice * r) % pm1
+    print("a*r mod (p-1) = {}*{} mod {} = {}".format(a_alice, r, pm1, ar))
+    print("(M - a*r) mod (p-1) = ({} - {}*{}) mod {} = {}".format(M, a_alice, r, pm1, val))
+
+    sep("s = k^(-1) * (M - a*r) mod (p-1)")
+    s_sig = (k_inv * val) % pm1
+    print("k_inv = {}".format(k_inv))
+    print("s = {} * {} mod {} = {}".format(k_inv, val, pm1, s_sig))
+
+    sep("Signature (r, s)")
+    print("(r, s) = ({}, {})".format(r, s_sig))
+    return r, s_sig, k_inv
+
+def _elgamal_verify_signature(M, p, g, a_alice, r, s_sig):
+    sep("ElGamal - Vérification signature (Ex2 Q6)")
+    print("Vérifier : g^M ?= y^r * r^s  [p]")
+
+    sep("y = g^a mod p (clé publique Alice)")
+    y = pow_mod_verbose(g, a_alice, p)
+
+    sep("Gauche : g^M mod p")
+    left = pow_mod_verbose(g, M, p)
+
+    sep("Droite : y^r mod p")
+    yr = pow_mod_verbose(y, r, p)
+
+    sep("Droite : r^s mod p")
+    rs = pow_mod_verbose(r, s_sig, p)
+
+    sep("Produit : (y^r * r^s) mod p")
+    right = _mul_mod_verbose(yr, rs, p, label=None)
+
+    sep("Conclusion")
+    if left == right:
+        print("OK : {} == {} -> signature valide".format(left, right))
+    else:
+        print("NON : {} != {} -> signature invalide".format(left, right))
+
+def ds_elgamal_ex2_run(choice):
+    p = 23
+    g = 5
+    M = 10
+    a = 3
+    b = 6
+    k = 7
+
+    if choice in ("1", "5"):
+        sep("Ex2 Q1 - Clé privée de Bob")
+        print("b (clé privée de Bob) = {}".format(b))
+
+    if choice in ("2", "5"):
+        C1, C2, yB, s_shared = _elgamal_encrypt(M, p, g, a, b)
+
+    if choice in ("3", "5"):
+        C1, C2, yB, s_shared = _elgamal_encrypt(M, p, g, a, b)
+        _elgamal_decrypt(C1, C2, p, b)
+
+    if choice in ("4", "5"):
+        r, s_sig, k_inv = _elgamal_signature(M, p, g, a, k)
+        if r is not None:
+            _elgamal_verify_signature(M, p, g, a, r, s_sig)
+
+def elgamal_ds_menu():
+    sep("DS - EXERCICE 2 (ElGamal)")
+    print("1) Q1 (clé privée Bob)")
+    print("2) Q2 (chiffrement C1,C2)")
+    print("3) Q3 (déchiffrement)")
+    print("4) Q4+Q5+Q6 (signature + vérif)")
+    print("5) Tout l'exercice 2")
+    print("6) Retour")
+    ch = input("> Choix : ").strip()
+    if ch in ("1", "2", "3", "4", "5"):
+        ds_elgamal_ex2_run(ch)
+
+def crypto_ds_menu():
+    sep("MENU - DS CRYPTOGRAPHIE")
+    print("1) Exercice 1 - RSA (valeurs du DS)")
+    print("2) Exercice 2 - ElGamal (valeurs du DS)")
+    print("3) Tout (Ex1 + Ex2)")
+    print("4) Retour")
+    ch = input("> Choix : ").strip()
+    if ch == "1":
+        rsa_ds_menu()
+    elif ch == "2":
+        elgamal_ds_menu()
+    elif ch == "3":
+        sep("RUN COMPLET - Ex1 RSA")
+        ds_rsa_ex1_run("5")
+        sep("RUN COMPLET - Ex2 ElGamal")
+        ds_elgamal_ex2_run("5")
+
 def menu():
     sep("MENU")
     print("1) Décomp. facteurs premiers")
@@ -639,7 +906,8 @@ def menu():
     print("5) Tables (Z / Z_n)")
     print("6) CRT (théorème des restes chinois)")
     print("7) Puissance mod m")
-    print("8) Quitter")
+    print("8) DS Cryptographie (RSA + ElGamal)")
+    print("9) Quitter")
     choice = input("> Choix : ").strip()
 
     if choice == "1":
@@ -657,6 +925,8 @@ def menu():
     elif choice == "7":
         run_pow_mod()
     elif choice == "8":
+        crypto_ds_menu()
+    elif choice == "9":
         print("Quitter le programme.")
         return
     else:
