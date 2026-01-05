@@ -393,7 +393,6 @@ def solve_system_crt_coprime():
 def pow_mod_verbose(a, e, m):
     sep('Puissance mod m - méthode "décomposition binaire"')
 
-    # Garde-fous
     if m <= 0:
         print("Le module doit être > 0")
         return
@@ -630,15 +629,6 @@ def run_pow_mod():
     except:
         print("Entrée invalide.")
 
-
-# ============================================================
-#  EDS / DS - CRYPTO (VERSION LÉGÈRE pour NumWorks)
-#  -> Pas de gros affichage d'étapes pour économiser la mémoire.
-#  -> Si besoin d'étapes :
-#     - inverse : Menu (3)
-#     - puissance mod : Menu (7)
-# ============================================================
-
 def _mod_pow_fast(a, e, m):
     if m <= 0:
         return 0
@@ -652,7 +642,6 @@ def _mod_pow_fast(a, e, m):
     return res
 
 def _inv_mod_quick(a, m):
-    # Calcul sans affichage (pour l'EDS)
     if m <= 0:
         return False, None
     g, x, y = egcd_verbose(a, m, show=False, show_back=False)
@@ -688,7 +677,6 @@ def eds_rsa_menu():
     if ch not in ("1","2","3","4","5"):
         return
 
-    # Pré-calculs RSA (résultats, pas d'étapes)
     nA = pA * qA
     phiA = (pA - 1) * (qA - 1)
     okA, dA = _inv_mod_quick(eA, phiA)
@@ -772,7 +760,6 @@ def eds_elgamal_menu():
     if ch not in ("1","2","3","4","5"):
         return
 
-    # Clé publique de Bob (pour chiffrement)
     yB = _mod_pow_fast(g, b, p)
 
     if ch in ("1","5"):
