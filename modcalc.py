@@ -1,19 +1,4 @@
-# ================================================
-#  Bézout, inverse modulaire et congruences (NumWorks)
-#  - Décomposition en facteurs premiers
-#  - PGCD / Bézout (Euclide étendu + remontée)
-#  - Inverse modulaire (avec étapes)
-#  - Équations modulaires (ax ≡ b [m])
-#  - Tables d'addition/multiplication en Z et Z_n (+ Z_n et Z_n*)
-#  - Théorème des restes chinois (CRT) pour systèmes copremiers
-#  - Puissance mod m
-#  Auteur : toi ;)
-#  Version menu "one-shot" (pas de boucle, version allégée)
-# ================================================
-
-# ---------- Outils d'affichage ----------
 def sep(title=None):
-    # Affichage compact sur une seule ligne (compatible petit écran)
     if title:
         print("--- {} ---".format(title))
     else:
@@ -33,7 +18,6 @@ def _expr_to_string(expr, R):
         return "0"
     return " + ".join(terms)
 
-# --- remplaçant rjust (compat MicroPython NumWorks) ---
 def _rjust(val, w):
     s = str(val)
     L = len(s)
@@ -47,7 +31,7 @@ def _col_width(values):
         l = len(str(v))
         if l > w:
             w = l
-    return w + 1  # petite marge
+    return w + 1
 
 def _print_table(header_vals, row_vals, cell_fn, title):
     sep(title)
@@ -57,17 +41,14 @@ def _print_table(header_vals, row_vals, cell_fn, title):
             candidates.append(cell_fn(i, j))
     w = _col_width(candidates)
 
-    # en-tête
     first_cell = " " * w + "|"
     print(first_cell, end="")
     for j in header_vals:
         print(_rjust(j, w), end="")
     print()
 
-    # séparation
     print("-" * (w + 1 + w * len(header_vals)))
 
-    # lignes
     for i in row_vals:
         print(_rjust(i, w) + "|", end="")
         for j in header_vals:
@@ -75,16 +56,13 @@ def _print_table(header_vals, row_vals, cell_fn, title):
             print(_rjust(v, w), end="")
         print()
 
-# ---------- gcd silencieux (pour Z_n*) ----------
 def gcd(a, b):
     a = abs(a); b = abs(b)
     while b:
         a, b = b, a % b
     return a
 
-# ---------- Décomposition en facteurs premiers (méthode "échelle") ----------
 def _format_factorization(fdict):
-    # fdict: {prime: exponent} -> "2^4 * 3 * 7"
     parts = []
     for p in sorted(fdict.keys()):
         e = fdict[p]
@@ -106,16 +84,14 @@ def prime_factors_ladder(n):
         print("1")
         return {}
 
-    print(n)  # ligne de départ de l'échelle
+    print(n)
     f = {}
 
-    # facteur 2
     while n % 2 == 0:
         n //= 2
         print("{} | {}".format(n, 2))
         f[2] = f.get(2, 0) + 1
 
-    # facteurs impairs
     p = 3
     while p * p <= n:
         while n % p == 0:
@@ -124,14 +100,12 @@ def prime_factors_ladder(n):
             f[p] = f.get(p, 0) + 1
         p += 2
 
-    # reste premier > 1
     if n > 1:
         print("1 | {}".format(n))
         f[n] = f.get(n, 0) + 1
 
     return f if sign > 0 else ({-1:1} | f) if hasattr(dict, "__or__") else (dict([(-1,1)]) | f)
 
-# ---------- Euclide étendu avec traçage + remontée ----------
 def egcd_verbose(a, b, show=True, show_back=True):
     A0, B0 = a, b
     divs = []
@@ -182,7 +156,6 @@ def egcd_verbose(a, b, show=True, show_back=True):
         print("Vérif : {}*{} + {}*{} = {}".format(A0, x, B0, y, A0*x + B0*y))
     return g, x, y
 
-# ---------- Inverse modulaire ----------
 def inv_mod(a, m, show=True):
     if m <= 0:
         if show:
@@ -201,7 +174,6 @@ def inv_mod(a, m, show=True):
         print("Vérif : ({}*{}) % {} = {}".format(a, inv, m, (a*inv) % m))
     return True, inv
 
-# ---------- Résolution a x ≡ b [m] ----------
 def solve_congruence(a, b, m, show=True, list_rep=True):
     if m <= 0:
         if show:
@@ -235,12 +207,9 @@ def solve_congruence(a, b, m, show=True, list_rep=True):
             print("Représentants (mod {}): {}".format(m, ", ".join(str(r) for r in reps)))
     return True, x0, m1, d
 
-# ---------- Résolution d'équations : wrappers pour formes générales ----------
-
 def solve_ax_plus_c_eq_b(a, c, b, m):
     sep("0) Mise en forme / réduction modulo {}".format(m))
     if (b % m) == 0 and (c % m) != 0:
-        # Cas typique "a x + c ≡ 0"
         print("{} x ≡ -{} ≡ {}  [ {} ]".format(a, c, (-c) % m, m))
     elif (c % m) == 0:
         print("{} x ≡ {}  [ {} ]".format(a, b % m, m))
@@ -296,7 +265,6 @@ def equations_menu_option():
     except:
         print("Entrée invalide.")
 
-# ---------- Tables Z / Z_n ----------
 def table_Z(start, end, op):
     if start > end:
         start, end = end, start
@@ -324,13 +292,11 @@ def table_Zn(n, op):
         title = "Table de multiplication modulo {}".format(n)
     _print_table(cols, rows, cell, title)
 
-    # Ensembles Z_n et Z_n*
     Zn_list = [i for i in range(n)]
     print("\nZ_{} = {{ {} }}".format(n, ", ".join([str(x) for x in Zn_list])))
     Zn_star = [a for a in range(n) if gcd(a, n) == 1]
     print("Z_{}* = {{ {} }}".format(n, ", ".join([str(x) for x in Zn_star])))
 
-# ---------- CRT (méthode du prof - formule directe) ----------
 def solve_system_crt_coprime():
     sep("CRT (formule directe)")
     k = int(input("Nombre d'équations k = "))
@@ -351,7 +317,6 @@ def solve_system_crt_coprime():
         residues.append(ai)
         moduli.append(mi)
 
-    # Vérif coprimalité par paires
     for i in range(k):
         for j in range(i+1, k):
             if gcd(moduli[i], moduli[j]) != 1:
@@ -359,12 +324,10 @@ def solve_system_crt_coprime():
                 print("Utilise l'option (6) Système modulaire (cas général).")
                 return
 
-    # Système
     print("Système :")
     for i in range(k):
         print("x ≡ {}  [ {} ]".format(residues[i], moduli[i]))
 
-    # Produit total
     M = 1
     for mi in moduli:
         M *= mi
@@ -372,7 +335,6 @@ def solve_system_crt_coprime():
     prod_str = " * ".join(str(mi) for mi in moduli)
     print("M = {} = {}".format(prod_str, M))
 
-    # Sous-produits Mi
     sep("Sous-produits")
     Mi_list = []
     for i in range(k):
@@ -380,14 +342,13 @@ def solve_system_crt_coprime():
         Mi_list.append(Mi)
         print("M{} = M / m{} = {}".format(i+1, i+1, Mi))
 
-    # Inverses yi
     sep("Recherche des inverses (Mi * yi ≡ 1 [mi])")
     yi_list = []
     for i in range(k):
         Mi = Mi_list[i]
         mi = moduli[i]
         r = Mi % mi
-        ok, yi = inv_mod(Mi, mi, show=False)  # on ne spamme pas Euclide ici
+        ok, yi = inv_mod(Mi, mi, show=False)
         if not ok:
             print("Impossible de trouver l'inverse de {} modulo {} (devrait être possible ici).".format(Mi, mi))
             return
@@ -396,12 +357,10 @@ def solve_system_crt_coprime():
             Mi, i+1, mi, Mi, r, mi, i+1, yi, mi, i+1, yi
         ))
 
-    # Construction (formule CRT)
     sep("Construction (formule CRT)")
     terms_str = "  +  ".join("{} * {} * {}".format(residues[i], Mi_list[i], yi_list[i]) for i in range(k))
     print("x ≡ {}  [ {} ]".format(terms_str, M))
 
-    # Calcul des termes
     sep("Calcul des termes")
     terms = []
     for i in range(k):
@@ -409,7 +368,6 @@ def solve_system_crt_coprime():
         terms.append(t)
         print("Terme #{} = {}*{}*{} = {}".format(i+1, residues[i], Mi_list[i], yi_list[i], t))
 
-    # Somme et réduction
     sep("Somme")
     S = sum(terms)
     print("S = {}".format(" + ".join(str(t) for t in terms)), end="")
@@ -418,7 +376,6 @@ def solve_system_crt_coprime():
     x0 = S % M
     print("x0 = {} % {} = {}".format(S, M, x0))
 
-    # Solution et vérifications
     sep("Solution canonique")
     print("x ≡ {}  [ {} ]".format(x0, M))
 
@@ -430,11 +387,9 @@ def solve_system_crt_coprime():
             x0, mi, x0 % mi, ai, "  (ok)" if (x0 % mi) == ai else "  (!!)"
         ))
 
-    # Forme générale
     sep("Forme générale")
     print("x = {} + {}*k,  k entier".format(x0, M))
 
-# ---------- Puissance mod m - méthode "décomposition binaire" ----------
 def pow_mod_verbose(a, e, m):
     sep('Puissance mod m - méthode "décomposition binaire"')
 
@@ -457,11 +412,7 @@ def pow_mod_verbose(a, e, m):
     print("m = {}".format(m))
     print("\nObjectif : calculer {}^{}  [{}]".format(a, e, m))
 
-    # Réduction éventuelle de l'exposant par le th. de Fermat (m premier, gcd(a,m)=1)
-    # a^(m-1) ≡ 1 [m]  =>  a^e ≡ a^(e mod (m-1)) [m]
-    # (on ne le fait que si ça sert : e >= m-1)
     orig_e = e
-    # petit test de primalité naïf (suffisant pour l'usage ici)
     is_prime = True
     if m < 2:
         is_prime = False
@@ -483,16 +434,13 @@ def pow_mod_verbose(a, e, m):
         print("{} = {} * {} + {}.".format(orig_e, q, m - 1, r))
         print("Donc {}^{} ≡ {}^{}  [ {} ]".format(a, orig_e, a, r, m))
         e = r
-        # Cas particulier : e multiple de (m-1)
         if e == 0:
             sep("Résultat")
             print("{}^{} (mod {}) = 1".format(a, orig_e, m))
             print("(Car l'exposant est multiple de {}-1 et {}^({}-1) ≡ 1 [ {} ])".format(m, a, m, m))
             return
 
-    # Helpers d'affichage compacts
     def small_rep(x, mod):
-        # Toujours le reste positif dans [0, mod-1]
         return str(x % mod)
 
     def power2_repr(a_sym, k):
@@ -503,7 +451,6 @@ def pow_mod_verbose(a, e, m):
             s = "({}^2)".format(s)
         return s
 
-    # 1) Écriture de l'exposant en base 2
     bits = []
     k = 0
     t = e
@@ -514,28 +461,23 @@ def pow_mod_verbose(a, e, m):
         k += 1
     bits_desc = sorted(bits, reverse=True)
 
-    # Sommes numériques et en puissances de 2
     somme_num = " + ".join(str(1 << k) for k in bits_desc)
     somme_pow2 = " + ".join("2^{}".format(k) for k in bits_desc)
     print("\n1) Écriture de l'exposant en base 2")
     print("{} = {} = {}".format(e, somme_num, somme_pow2))
 
-    # 2) Décomposition de la puissance
     print("\n2) Décomposition de la puissance")
     droite_pow2 = " + ".join("2^{}".format(k) for k in bits_desc)
     print("{}^{} = {}^({})".format(a, e, a, droite_pow2))
     print("     = " + " * ".join("{}^(2^{})".format(a, k) for k in bits_desc))
 
-    # 3) Calculs modulo m (paliers)
     print("\n3) Calculs modulo {} (paliers)".format(m))
-    pow_values = {}  # k -> a^(2^k) mod m
+    pow_values = {}
 
-    # k = 0  →  a^(2^0) = a^1
     val = a % m
     pow_values[0] = val
     print("- {}^1 ≡ {}  [ {} ]".format(a, small_rep(a, m), m))
 
-    # k >= 1  → a^(2^k) = (a^(2^{k-1}))^2
     max_k = bits_desc[0] if bits_desc else 0
     prev_val = val
     for kk in range(1, max_k + 1):
@@ -555,7 +497,6 @@ def pow_mod_verbose(a, e, m):
         pow_values[kk] = new_val
         prev_val = new_val
 
-    # 4) Assemblage des facteurs utiles (bits à 1)
     print("\n4) Assemblage des facteurs utiles ({})".format(", ".join("2^{}".format(k) for k in bits_desc)))
     print("{}^{} ≡ {}  [ {} ]".format(
         a, e, " * ".join("{}^(2^{})".format(a, k) for k in bits_desc), m
@@ -563,7 +504,6 @@ def pow_mod_verbose(a, e, m):
     factors_str = " * ".join(small_rep(pow_values[k], m) for k in bits_desc)
     print("     ≡ {}  [ {} ]".format(factors_str, m))
 
-    # Multiplication pas à pas
     acc = 1 % m
     if bits_desc:
         acc = pow_values[bits_desc[0]] % m
@@ -578,7 +518,6 @@ def pow_mod_verbose(a, e, m):
                 small_rep(acc, m)
             ))
 
-    # 5) Résultat
     sep("Résultat")
     print("{}^{} (mod {}) = {}".format(a, orig_e, m, acc))
     print("(Vérif rapide : {} % {} = {})".format(acc, m, acc % m))
@@ -590,26 +529,21 @@ def show_factorization_and_option_gcd():
         print("Choix invalide (1 ou 2).")
         return
 
-    # Premier entier
     n1 = int(input("n1 = "))
     sep("n1 : échelle")
     f1 = prime_factors_ladder(n1)
-    # Affichage n1 = ...
     absn1 = abs(n1)
     print("{} = {}".format(n1, _format_factorization({p:e for p,e in f1.items() if p != -1} if -1 in f1 else f1)))
 
     if k == 1:
         return
 
-    # Second entier
     n2 = int(input("n2 = "))
     sep("n2 : échelle")
     f2 = prime_factors_ladder(n2)
     print("{} = {}".format(n2, _format_factorization({p:e for p,e in f2.items() if p != -1} if -1 in f2 else f2)))
 
-    # PGCD par facteurs (exposants minimum)
     sep("PGCD par facteurs")
-    # on ignore le -1 éventuel pour le PGCD
     f1pos = {p:e for p,e in f1.items() if p > 1}
     f2pos = {p:e for p,e in f2.items() if p > 1}
     common = {}
@@ -617,23 +551,19 @@ def show_factorization_and_option_gcd():
         if p in f2pos:
             common[p] = min(f1pos[p], f2pos[p])
 
-    # valeur numérique du pgcd
     pgcd_val = 1
     for p, e in common.items():
-        # puissance p**e
         v = 1
         for _ in range(e):
             v *= p
         pgcd_val *= v
 
-    # Affichage type "PGCD(336,126) = 2 * 3 * 7 = 42"
     if common:
         fact_str = _format_factorization(common)
         print("PGCD({}, {}) = {} = {}".format(n1, n2, fact_str, pgcd_val))
     else:
         print("PGCD({}, {}) = 1".format(n1, n2))
 
-# ---------- Wrappers de saisie (fonctions d'entrée utilisateur) ----------
 def run_pgcd_bezout():
     sep("PGCD / Bézout")
     try:
@@ -700,7 +630,6 @@ def run_pow_mod():
     except:
         print("Entrée invalide.")
 
-# ---------- Menu "one-shot" ----------
 def menu():
     sep("MENU")
     print("1) Décomp. facteurs premiers")
@@ -733,5 +662,4 @@ def menu():
     else:
         print("Choix inconnu.")
 
-# ---------- Lancer ----------
 menu()
