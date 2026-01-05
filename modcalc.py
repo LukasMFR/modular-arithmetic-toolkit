@@ -622,11 +622,6 @@ def run_pow_mod():
     except:
         print("Entrée invalide.")
 
-# ============================================================
-#  DS CRYPTO - MODE GÉNÉRIQUE (RSA & ElGamal)
-#  -> L'utilisateur saisit les paramètres (comme dans un DS)
-# ============================================================
-
 def _mul_mod_verbose(a, b, m, label=None):
     if label:
         sep(label)
