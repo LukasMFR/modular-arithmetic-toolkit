@@ -122,4 +122,4 @@ def main():
 
     solve_crt_3_compact(a1, m1, a2, m2, a3, m3)
 
-    main()
+main()
