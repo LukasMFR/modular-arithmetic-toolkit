@@ -72,37 +72,52 @@ def affine_encrypt_compact(plain, a, b):
     print("Texte chiffré = {}".format(cipher))
     return cipher
 
-def affine_decrypt_compact(cipher, a, b):
-    sep("Déchiffrement affine")
-    print("D(y) = a^-1 * (y - b) mod 26")
+def invert_affine_function_compact(a, b):
+    sep("Inverser la fonction affine")
+    print("f(x) = a*x + b  [26]")
     print("a = {}, b = {}".format(a, b))
 
-    sep("Inverse de a (mod 26)")
+    sep("Condition")
+    g = gcd(a, M)
+    print("pgcd({}, 26) = {}".format(a, g))
+    if g != 1:
+        print("a non inversible modulo 26 => pas d'inverse de f.")
+        return None
+
+    sep("1) Inverse de a (mod 26)")
     ok, ainv = inv_mod_compact(a, M)
     if not ok:
-        print("a non inversible modulo 26 => impossible.")
+        print("Impossible (ne devrait pas arriver si pgcd(a,26)=1).")
         return None
     print("a^-1 ≡ {}  [26]".format(ainv))
     print("Vérif : ({}*{}) % 26 = {}".format(a, ainv, (a*ainv) % 26))
 
-    cipher = normalize_text(cipher)
-    sep("Calcul (lettres uniquement)")
-    out = []
-    for ch in cipher:
-        if ch in ALPHABET:
-            y = char_to_int(ch)
-            x = (ainv * ((y - b) % M)) % M
-            print("{}({}) -> {}*({}-{}) mod 26 = {} -> {}".format(
-                ch, y, ainv, y, b, x, int_to_char(x)
-            ))
-            out.append(int_to_char(x))
-        else:
-            out.append(ch)
+    sep("2) Dérivation de f^-1")
+    print("y ≡ a*x + b  [26]")
+    print("y - b ≡ a*x  [26]")
+    print("x ≡ a^-1*(y - b)  [26]")
+    print("x ≡ a^-1*y - a^-1*b  [26]")
 
-    plain = "".join(out)
-    sep("Résultat")
-    print("Texte déchiffré = {}".format(plain))
-    return plain
+    sep("3) Mise sous forme (A*y + B) [26]")
+    A = ainv % M
+    B = (-ainv * b) % M
+    print("A = a^-1 mod 26 = {}".format(A))
+    print("B = (-a^-1*b) mod 26 = (-{}*{}) mod 26 = {}".format(ainv, b, B))
+    print("Donc f^-1(y) = {}*y + {}  [26]".format(A, B))
+
+    sep("Mini-vérif symbolique")
+    print("Si x = f^-1(y), alors f(x) = y (mod 26).")
+    print("Tu peux tester une valeur avec l'option table si besoin.")
+
+    rep = input("Afficher la table (y->x) pour A..Z ? (o/n) : ").strip().lower()
+    if rep == "o" or rep == "oui":
+        sep("Table (y -> x)")
+        print("y  -> x")
+        for y in range(26):
+            x = (A * y + B) % 26
+            print("{}({}) -> {}({})".format(int_to_char(y), y, int_to_char(x), x))
+
+    return A, B
 
 def find_a_b_from_two_pairs_compact(p1, c1, p2, c2):
     sep("Retrouver (a,b) avec 2 paires")
@@ -125,7 +140,7 @@ def find_a_b_from_two_pairs_compact(p1, c1, p2, c2):
     print("{}({}) ≡ a*{}({}) + b [26]".format(c2, C2, p2, P2))
     print("ΔC = ({}-{}) mod 26 = {}".format(C1, C2, dC))
     print("ΔP = ({}-{}) mod 26 = {}".format(P1, P2, dP))
-    print("=> a*ΔP ≡ ΔC  [26]  =>  a*{} ≡ {} [26]".format(dP, dC))
+    print("=> a*{} ≡ {} [26]".format(dP, dC))
 
     sep("2) Inverse de ΔP (mod 26)")
     ok, inv_dP = inv_mod_compact(dP, M)
@@ -137,8 +152,8 @@ def find_a_b_from_two_pairs_compact(p1, c1, p2, c2):
     sep("3) Calcul de a puis b")
     a = (dC * inv_dP) % M
     b = (C1 - a * P1) % M
-    print("a = ΔC*(ΔP)^-1 mod 26 = {}*{} mod 26 = {}".format(dC, inv_dP, a))
-    print("b = C1 - a*P1 mod 26 = {} - {}*{} mod 26 = {}".format(C1, a, P1, b))
+    print("a = {}*{} mod 26 = {}".format(dC, inv_dP, a))
+    print("b = {} - {}*{} mod 26 = {}".format(C1, a, P1, b))
 
     sep("Conclusion")
     print("a = {}, b = {}".format(a, b))
@@ -149,7 +164,7 @@ def find_a_b_from_two_pairs_compact(p1, c1, p2, c2):
 def main():
     sep("Chiffrement affine (compact)")
     print("1) Chiffrer")
-    print("2) Déchiffrer")
+    print("2) Inverser la fonction f(x)=a*x+b [26]")
     print("3) Retrouver (a,b) avec 2 correspondances")
     ch = input("> Choix : ").strip()
 
@@ -167,11 +182,10 @@ def main():
         try:
             a = int(input("a = "))
             b = int(input("b = "))
-            cipher = input("Texte à déchiffrer = ")
         except:
             print("Entrée invalide.")
             return
-        affine_decrypt_compact(cipher, a, b)
+        invert_affine_function_compact(a, b)
 
     elif ch == "3":
         print("Deux correspondances (lettre -> lettre).")
