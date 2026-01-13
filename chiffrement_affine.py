@@ -1,8 +1,8 @@
 def sep(title=None):
     if title:
-        print("\n" + "-" * 10 + f" {title} " + "-" * 10)
+        print("--- {} ---".format(title))
     else:
-        print("\n" + "-" * 38)
+        print("-" * 38)
 
 def gcd(a, b):
     a = abs(a); b = abs(b)
@@ -10,50 +10,25 @@ def gcd(a, b):
         a, b = b, a % b
     return a
 
-def egcd_verbose(a, b, show=True):
-    A0, B0 = a, b
+def egcd(a, b):
     old_r, r = a, b
     old_s, s = 1, 0
     old_t, t = 0, 1
-    divs = []
-
     while r != 0:
         q = old_r // r
-        rem = old_r - q * r
-        divs.append((old_r, r, q, rem))
-        old_r, r = r, rem
+        old_r, r = r, old_r - q * r
         old_s, s = s, old_s - q * s
         old_t, t = t, old_t - q * t
+    return old_r, old_s, old_t
 
-    g, x, y = old_r, old_s, old_t
-
-    if show:
-        sep(f"Euclide étendu ({A0}, {B0})")
-        for (A, B, q, r_) in divs:
-            print(f"{A} = {q}*{B} + {r_}")
-        print(f"pgcd({A0},{B0}) = {g}")
-        print(f"Bézout : {g} = {x}*{A0} + {y}*{B0}")
-        print(f"Vérif : {x}*{A0} + {y}*{B0} = {x*A0 + y*B0}")
-
-    return g, x, y
-
-def inv_mod_verbose(a, m):
-    sep(f"Inverse modulaire : {a}^(-1) [ {m} ]")
+def inv_mod_compact(a, m):
     if m <= 0:
-        print("Erreur : m doit être > 0")
         return False, None
-    g, x, _ = egcd_verbose(a, m, show=True)
+    g, x, _ = egcd(a, m)
     if g != 1:
-        sep("Conclusion")
-        print(f"pgcd({a},{m}) = {g} ≠ 1 => pas d'inverse.")
         return False, None
-    inv = x % m
-    sep("Conclusion")
-    print(f"{a}^(-1) ≡ {inv}  [ {m} ]")
-    print(f"Vérif : ({a}*{inv}) % {m} = {(a*inv) % m}")
-    return True, inv
+    return True, x % m
 
-# --- Affine cipher helpers (alphabet A..Z -> 0..25)
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 M = 26
 
@@ -64,121 +39,118 @@ def int_to_char(x):
     return ALPHABET[x % M]
 
 def normalize_text(s):
-    # Met en majuscules, conserve espaces/ponctuation.
     return s.upper()
 
-def affine_encrypt_verbose(plain, a, b):
-    sep("Chiffrement affine - Rappel formule")
+def affine_encrypt_compact(plain, a, b):
+    sep("Chiffrement affine")
     print("E(x) = (a*x + b) mod 26")
-    print(f"a = {a}, b = {b}, modulo = 26")
+    print("a = {}, b = {}".format(a, b))
 
-    sep("Vérification de la condition (a inversible mod 26)")
+    sep("Condition")
     g = gcd(a, M)
-    print(f"pgcd({a}, 26) = {g}")
+    print("pgcd({}, 26) = {}".format(a, g))
     if g != 1:
-        print("=> a n'est PAS inversible modulo 26 => chiffrement affine impossible avec ce a.")
+        print("a non inversible modulo 26 => impossible.")
         return None
 
     plain = normalize_text(plain)
-    sep("Conversion + calcul lettre par lettre")
+    sep("Calcul (lettres uniquement)")
     out = []
     for ch in plain:
         if ch in ALPHABET:
             x = char_to_int(ch)
             y = (a * x + b) % M
-            print(f"{ch} -> x={x} ; y=(a*x+b) mod 26 = ({a}*{x}+{b}) mod 26 = {y} -> {int_to_char(y)}")
+            print("{}({}) -> ({}*{}+{}) mod 26 = {} -> {}".format(
+                ch, x, a, x, b, y, int_to_char(y)
+            ))
             out.append(int_to_char(y))
         else:
             out.append(ch)
 
     cipher = "".join(out)
     sep("Résultat")
-    print(f"Texte chiffré = {cipher}")
+    print("Texte chiffré = {}".format(cipher))
     return cipher
 
-def affine_decrypt_verbose(cipher, a, b):
-    sep("Déchiffrement affine - Rappel formule")
-    print("D(y) = a^{-1} * (y - b) mod 26")
-    print(f"a = {a}, b = {b}, modulo = 26")
+def affine_decrypt_compact(cipher, a, b):
+    sep("Déchiffrement affine")
+    print("D(y) = a^-1 * (y - b) mod 26")
+    print("a = {}, b = {}".format(a, b))
 
-    sep("1) Calcul de a^{-1} mod 26")
-    ok, ainv = inv_mod_verbose(a, M)
+    sep("Inverse de a (mod 26)")
+    ok, ainv = inv_mod_compact(a, M)
     if not ok:
-        print("=> Déchiffrement impossible (a non inversible).")
+        print("a non inversible modulo 26 => impossible.")
         return None
+    print("a^-1 ≡ {}  [26]".format(ainv))
+    print("Vérif : ({}*{}) % 26 = {}".format(a, ainv, (a*ainv) % 26))
 
     cipher = normalize_text(cipher)
-    sep("2) Conversion + calcul lettre par lettre")
+    sep("Calcul (lettres uniquement)")
     out = []
     for ch in cipher:
         if ch in ALPHABET:
             y = char_to_int(ch)
             x = (ainv * ((y - b) % M)) % M
-            print(f"{ch} -> y={y} ; x=a^-1*(y-b) mod 26 = {ainv}*({y}-{b}) mod 26 = {x} -> {int_to_char(x)}")
+            print("{}({}) -> {}*({}-{}) mod 26 = {} -> {}".format(
+                ch, y, ainv, y, b, x, int_to_char(x)
+            ))
             out.append(int_to_char(x))
         else:
             out.append(ch)
 
     plain = "".join(out)
     sep("Résultat")
-    print(f"Texte déchiffré = {plain}")
+    print("Texte déchiffré = {}".format(plain))
     return plain
 
-def find_a_b_from_two_pairs_verbose(p1, c1, p2, c2):
-    """
-    Avec deux correspondances:
-      c1 ≡ a*p1 + b [26]
-      c2 ≡ a*p2 + b [26]
-    => (c1 - c2) ≡ a*(p1 - p2) [26]
-    """
-    sep("Retrouver (a,b) à partir de 2 correspondances")
-    print("Hypothèse : alphabet A..Z -> 0..25")
-    print("c ≡ a*p + b [26]")
+def find_a_b_from_two_pairs_compact(p1, c1, p2, c2):
+    sep("Retrouver (a,b) avec 2 paires")
+    print("c ≡ a*p + b  [26]")
 
-    p1 = p1.upper(); c1 = c1.upper(); p2 = p2.upper(); c2 = c2.upper()
+    p1 = p1.upper(); c1 = c1.upper()
+    p2 = p2.upper(); c2 = c2.upper()
+
     if p1 not in ALPHABET or c1 not in ALPHABET or p2 not in ALPHABET or c2 not in ALPHABET:
-        print("Erreur : il faut donner des LETTRES A..Z.")
-        return
+        print("Erreur : lettres A..Z uniquement.")
+        return None
 
     P1 = char_to_int(p1); C1 = char_to_int(c1)
     P2 = char_to_int(p2); C2 = char_to_int(c2)
 
-    sep("1) Mise en équation")
-    print(f"{c1}({C1}) ≡ a*{p1}({P1}) + b [26]")
-    print(f"{c2}({C2}) ≡ a*{p2}({P2}) + b [26]")
+    sep("1) Soustraction (éliminer b)")
+    dC = (C1 - C2) % M
+    dP = (P1 - P2) % M
+    print("{}({}) ≡ a*{}({}) + b [26]".format(c1, C1, p1, P1))
+    print("{}({}) ≡ a*{}({}) + b [26]".format(c2, C2, p2, P2))
+    print("ΔC = ({}-{}) mod 26 = {}".format(C1, C2, dC))
+    print("ΔP = ({}-{}) mod 26 = {}".format(P1, P2, dP))
+    print("=> a*ΔP ≡ ΔC  [26]  =>  a*{} ≡ {} [26]".format(dP, dC))
 
-    sep("2) Soustraction pour éliminer b")
-    left = (C1 - C2) % M
-    right_coeff = (P1 - P2) % M
-    print(f"(C1 - C2) mod 26 = ({C1}-{C2}) mod 26 = {left}")
-    print(f"(P1 - P2) mod 26 = ({P1}-{P2}) mod 26 = {right_coeff}")
-    print(f"=> {left} ≡ a*{right_coeff}  [26]")
-
-    sep("3) Résolution a*ΔP ≡ ΔC [26] (inverse de ΔP si possible)")
-    ok, inv_dp = inv_mod_verbose(right_coeff, M)
+    sep("2) Inverse de ΔP (mod 26)")
+    ok, inv_dP = inv_mod_compact(dP, M)
     if not ok:
-        print("ΔP n'est pas inversible mod 26 => ambigu / pas unique avec ces deux paires.")
-        return
+        print("ΔP non inversible mod 26 => pas de solution unique.")
+        return None
+    print("(ΔP)^-1 ≡ {} [26]".format(inv_dP))
 
-    a = (left * inv_dp) % M
-    sep("4) Trouver b")
-    # b ≡ C1 - a*P1 [26]
+    sep("3) Calcul de a puis b")
+    a = (dC * inv_dP) % M
     b = (C1 - a * P1) % M
-    print(f"a = ΔC * (ΔP)^-1 mod 26 = {left}*{inv_dp} mod 26 = {a}")
-    print(f"b = C1 - a*P1 mod 26 = {C1} - {a}*{P1} mod 26 = {b}")
+    print("a = ΔC*(ΔP)^-1 mod 26 = {}*{} mod 26 = {}".format(dC, inv_dP, a))
+    print("b = C1 - a*P1 mod 26 = {} - {}*{} mod 26 = {}".format(C1, a, P1, b))
 
     sep("Conclusion")
-    print(f"Paramètres trouvés : a = {a}, b = {b}")
-    print("Vérif rapide :")
-    print(f"  a*P1+b mod 26 = ({a}*{P1}+{b}) mod 26 = {(a*P1+b)%M} (attendu {C1})")
-    print(f"  a*P2+b mod 26 = ({a}*{P2}+{b}) mod 26 = {(a*P2+b)%M} (attendu {C2})")
+    print("a = {}, b = {}".format(a, b))
+    print("Vérif : (a*P1+b) mod 26 = {} (attendu {})".format((a*P1+b) % 26, C1))
+    print("Vérif : (a*P2+b) mod 26 = {} (attendu {})".format((a*P2+b) % 26, C2))
+    return a, b
 
 def main():
-    sep("CHAPITRE 2 - Chiffrement affine")
-    print("Alphabet : A..Z => 0..25 (mod 26).")
+    sep("Chiffrement affine (compact)")
     print("1) Chiffrer")
     print("2) Déchiffrer")
-    print("3) Retrouver (a,b) avec 2 correspondances (option utile en exo)")
+    print("3) Retrouver (a,b) avec 2 correspondances")
     ch = input("> Choix : ").strip()
 
     if ch == "1":
@@ -189,7 +161,7 @@ def main():
         except:
             print("Entrée invalide.")
             return
-        affine_encrypt_verbose(plain, a, b)
+        affine_encrypt_compact(plain, a, b)
 
     elif ch == "2":
         try:
@@ -199,15 +171,15 @@ def main():
         except:
             print("Entrée invalide.")
             return
-        affine_decrypt_verbose(cipher, a, b)
+        affine_decrypt_compact(cipher, a, b)
 
     elif ch == "3":
-        print("Donne 2 correspondances (plaintext->ciphertext), une lettre à chaque fois.")
-        p1 = input("Plain #1 (lettre) = ").strip()
-        c1 = input("Cipher #1 (lettre) = ").strip()
-        p2 = input("Plain #2 (lettre) = ").strip()
-        c2 = input("Cipher #2 (lettre) = ").strip()
-        find_a_b_from_two_pairs_verbose(p1, c1, p2, c2)
+        print("Deux correspondances (lettre -> lettre).")
+        p1 = input("Plain #1 = ").strip()
+        c1 = input("Cipher #1 = ").strip()
+        p2 = input("Plain #2 = ").strip()
+        c2 = input("Cipher #2 = ").strip()
+        find_a_b_from_two_pairs_compact(p1, c1, p2, c2)
 
     else:
         print("Choix inconnu.")
