@@ -142,5 +142,4 @@ def main():
 
     solve_crt_3_verbose(a1, m1, a2, m2, a3, m3)
 
-if __name__ == "__main__":
-    main()
+main()
