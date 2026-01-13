@@ -192,7 +192,7 @@ def rsa_verify_verbose(m, s, nA, eA):
         print("Signature INVALIDE ❌")
         return False
 
-def run_cli():
+def main():
     sep("CHAPITRE 3 - RSA complet (jusqu’à signature)")
     print("On va générer les clés Alice et Bob avec (p,q,e).")
     print("Ensuite : chiffrement, signature, vérification.")
@@ -309,4 +309,4 @@ def run_cli():
         print("Choix inconnu.")
 
 if __name__ == "__main__":
-    run_cli()
+    main()

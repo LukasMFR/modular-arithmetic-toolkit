@@ -173,8 +173,8 @@ def find_a_b_from_two_pairs_verbose(p1, c1, p2, c2):
     print(f"  a*P1+b mod 26 = ({a}*{P1}+{b}) mod 26 = {(a*P1+b)%M} (attendu {C1})")
     print(f"  a*P2+b mod 26 = ({a}*{P2}+{b}) mod 26 = {(a*P2+b)%M} (attendu {C2})")
 
-def run_cli():
-    sep("CHIFFREMENT AFFINE")
+def main():
+    sep("CHAPITRE 2 - Chiffrement affine")
     print("Alphabet : A..Z => 0..25 (mod 26).")
     print("1) Chiffrer")
     print("2) Déchiffrer")
@@ -213,4 +213,4 @@ def run_cli():
         print("Choix inconnu.")
 
 if __name__ == "__main__":
-    run_cli()
+    main()

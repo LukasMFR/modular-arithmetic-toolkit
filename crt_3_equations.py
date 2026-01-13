@@ -123,8 +123,8 @@ def solve_crt_3_verbose(a1, m1, a2, m2, a3, m3):
     print(f"Solution canonique : x ≡ {x0}  [ {M} ]")
     print(f"Forme générale : x = {x0} + {M}*k,  k ∈ Z")
 
-def run_cli():
-    sep("CRT - Théorème chinois (3 congruences)")
+def main():
+    sep("CHAPITRE 1 - Théorème chinois (3 congruences)")
     print("Tu vas entrer : x ≡ a1 [m1], x ≡ a2 [m2], x ≡ a3 [m3].")
     try:
         a1 = int(input("a1 = "))
@@ -143,4 +143,4 @@ def run_cli():
     solve_crt_3_verbose(a1, m1, a2, m2, a3, m3)
 
 if __name__ == "__main__":
-    run_cli()
+    main()
