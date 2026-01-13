@@ -53,23 +53,24 @@ def egcd_verbose(a, b, show=True, show_back=True):
         print("pgcd({}, {}) = {}".format(A0, B0, g))
 
     if show and show_back and k >= 2:
-        sep("Remontée (U,V) : {} = U*a + V*b".format(g))
+        sep("Remontée (combinaison linéaire)")
         print("{} = {} - {}*{}".format(R[k], R[k-2], Q[k], R[k-1]))
         expr = {k-2: 1, k-1: -Q[k]}
         for j in range(k-1, 1, -1):
             cj = expr.get(j, 0)
             if cj == 0:
                 continue
+            print("Remplacer {} par {} - {}*{}".format(R[j], R[j-2], Q[j], R[j-1]))
             expr.pop(j, None)
             expr[j-2] = expr.get(j-2, 0) + cj
             expr[j-1] = expr.get(j-1, 0) - cj * Q[j]
             print("=> {} = {}".format(R[k], _expr_to_string(expr, R)))
-        U = expr.get(0, 0)
-        V = expr.get(1, 0)
-        print("Donc {} = {}*{} + {}*{}".format(g, U, A0, V, B0))
+        x_back = expr.get(0, 0)
+        y_back = expr.get(1, 0)
+        print("Donc {} = {}*{} + {}*{}".format(g, x_back, A0, y_back, B0))
 
     if show:
-        print("Coeffs de Bézout : U = {}, V = {}".format(x, y))
+        print("Coeffs de Bézout : x = {}, y = {}".format(x, y))
         print("Vérif : {}*{} + {}*{} = {}".format(A0, x, B0, y, A0*x + B0*y))
     return g, x, y
 
@@ -82,7 +83,7 @@ def inv_mod(a, m, show=True):
     if g != 1:
         if show:
             sep("Inverse modulaire")
-            print("pgcd({}, {}) = {} ≠ 1 : pas d'inverse modulo {}.".format(a, m, g, m))
+            print("gcd({}, {}) = {} ≠ 1 : pas d'inverse modulo {}.".format(a, m, g, m))
         return False, None
     inv = x % m
     if show:
@@ -92,27 +93,32 @@ def inv_mod(a, m, show=True):
     return True, inv
 
 def run_pgcd_simple():
-    sep("PGCD (simple)")
+    sep("PGCD (Euclide)")
     try:
         a = int(input("a = "))
         b = int(input("b = "))
     except:
         print("Entrée invalide.")
         return
-    g = gcd(a, b)
+    g, x, y = egcd_verbose(a, b, show=True, show_back=False)
+    sep("Résultat")
     print("pgcd({}, {}) = {}".format(a, b, g))
 
-def run_euclide_bezout():
-    sep("Euclide étendu (U,V) + Bézout")
+def run_bezout_uv():
+    sep("Euclide étendu (U, V) / Bézout")
     try:
         a = int(input("a = "))
         b = int(input("b = "))
     except:
         print("Entrée invalide.")
         return
-    egcd_verbose(a, b, show=True, show_back=True)
+    g, u, v = egcd_verbose(a, b, show=True, show_back=True)
+    sep("Résultat (U, V)")
+    print("pgcd({}, {}) = {}".format(a, b, g))
+    print("U = {}, V = {}".format(u, v))
+    print("{} = {}*{} + {}*{}".format(g, u, a, v, b))
 
-def run_inverse_mod():
+def run_inverse_modulaire():
     sep("Inverse modulaire")
     try:
         a = int(input("a = "))
@@ -123,19 +129,19 @@ def run_inverse_mod():
     inv_mod(a, m, show=True)
 
 def menu():
-    sep("MENU")
-    print("1) PGCD (simple)")
-    print("2) Euclide étendu (U,V) + Bézout")
-    print("3) Inverse mod m")
+    sep("MENU (PGCD / U,V / Inverse)")
+    print("1) PGCD (Euclide) : divisions + pgcd")
+    print("2) Euclide étendu : U,V + remontée complète")
+    print("3) Inverse modulaire : étapes complètes")
     print("4) Quitter")
     choice = input("> Choix : ").strip()
 
     if choice == "1":
         run_pgcd_simple()
     elif choice == "2":
-        run_euclide_bezout()
+        run_bezout_uv()
     elif choice == "3":
-        run_inverse_mod()
+        run_inverse_modulaire()
     elif choice == "4":
         print("Quitter le programme.")
         return
