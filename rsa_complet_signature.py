@@ -1,8 +1,8 @@
 def sep(title=None):
     if title:
-        print("\n" + "-" * 10 + f" {title} " + "-" * 10)
+        print("--- {} ---".format(title))
     else:
-        print("\n" + "-" * 38)
+        print("-" * 38)
 
 def gcd(a, b):
     a = abs(a); b = abs(b)
@@ -10,54 +10,28 @@ def gcd(a, b):
         a, b = b, a % b
     return a
 
-def egcd_verbose(a, b, show=True, show_back=True):
-    A0, B0 = a, b
+def egcd(a, b):
     old_r, r = a, b
     old_s, s = 1, 0
     old_t, t = 0, 1
-    divs = []
-
     while r != 0:
         q = old_r // r
-        rem = old_r - q * r
-        divs.append((old_r, r, q, rem))
-        old_r, r = r, rem
+        old_r, r = r, old_r - q * r
         old_s, s = s, old_s - q * s
         old_t, t = t, old_t - q * t
+    return old_r, old_s, old_t
 
-    g, x, y = old_r, old_s, old_t
-
-    if show:
-        sep(f"Algorithme d'Euclide ({A0} , {B0})")
-        for (A, B, q, r_) in divs:
-            print(f"{A} = {q}*{B} + {r_}")
-        print(f"pgcd({A0}, {B0}) = {g}")
-
-    if show and show_back:
-        sep("Bézout (coeffs)")
-        print(f"{g} = {x}*{A0} + {y}*{B0}")
-        print(f"Vérif : {x}*{A0} + {y}*{B0} = {x*A0 + y*B0}")
-
-    return g, x, y
-
-def inv_mod_verbose(a, m):
-    sep(f"Inverse modulaire : {a}^(-1) [ {m} ]")
+def inv_mod_compact(a, m):
     if m <= 0:
-        print("Erreur : m doit être > 0")
         return False, None
-    g, x, _ = egcd_verbose(a, m, show=True, show_back=True)
+    g, x, _ = egcd(a, m)
     if g != 1:
-        sep("Conclusion")
-        print(f"pgcd({a},{m}) = {g} ≠ 1 => pas d'inverse, donc pas de clé privée d.")
         return False, None
-    inv = x % m
-    sep("Conclusion")
-    print(f"{a}^(-1) ≡ {inv}  [ {m} ]")
-    print(f"Vérif : ({a}*{inv}) % {m} = {(a*inv) % m}")
-    return True, inv
+    return True, x % m
 
-def pow_mod_verbose(a, e, m):
-    sep('Puissance modulaire (décomposition binaire)')
+def pow_mod_compact(a, e, m, show_steps=True, title=None):
+    if title:
+        sep(title)
     if m <= 0:
         print("Erreur : m doit être > 0")
         return None
@@ -65,17 +39,28 @@ def pow_mod_verbose(a, e, m):
         print("Erreur : exposant négatif non géré.")
         return None
 
-    print(f"Objectif : calculer {a}^{e} mod {m}")
     a0, e0 = a, e
+    a %= m
 
-    # 1) Écriture binaire
-    sep("1) Écriture de l'exposant en binaire")
-    if e == 0:
-        print("e = 0 => résultat = 1 mod m")
+    if not show_steps:
+        res = 1 % m
+        while e > 0:
+            if e & 1:
+                res = (res * a) % m
+            a = (a * a) % m
+            e >>= 1
+        return res
+
+    print("Objectif : {}^{} mod {}".format(a0, e0, m))
+
+    if e0 == 0:
+        print("e = 0 => résultat = 1 mod {}".format(m))
+        sep("Résultat")
+        print("{}^{} mod {} = {}".format(a0, e0, m, 1 % m))
         return 1 % m
 
     bits = []
-    t = e
+    t = e0
     k = 0
     while t > 0:
         if t & 1:
@@ -83,120 +68,147 @@ def pow_mod_verbose(a, e, m):
         t >>= 1
         k += 1
     bits_desc = sorted(bits, reverse=True)
-    print(f"Bits à 1 : {', '.join('2^'+str(b) for b in bits_desc)}")
-    print(f"Donc {e} = " + " + ".join(str(1 << b) for b in bits_desc))
 
-    # 2) Paliers (carrés successifs)
-    sep("2) Paliers : a^(2^k) mod m")
-    a_mod = a % m
-    pow_vals = {0: a_mod}
-    print(f"a^(2^0) = a^1 ≡ {a_mod} [ {m} ]")
+    sep("1) Binaire")
+    print("Bits à 1 :", ", ".join("2^{}".format(b) for b in bits_desc))
+    print("{} = {}".format(e0, " + ".join(str(1 << b) for b in bits_desc)))
+
+    sep("2) Paliers (carrés successifs)")
+    pow_vals = {0: a % m}
+    print("a^(2^0) ≡ {} [ {} ]".format(pow_vals[0], m))
     max_k = bits_desc[0] if bits_desc else 0
-    prev = a_mod
+    prev = pow_vals[0]
     for kk in range(1, max_k + 1):
         prev = (prev * prev) % m
         pow_vals[kk] = prev
-        print(f"a^(2^{kk}) ≡ (a^(2^{kk-1}))^2 ≡ {prev} [ {m} ]")
+        print("a^(2^{}) ≡ {} [ {} ]".format(kk, prev, m))
 
-    # 3) Assemblage
-    sep("3) Assemblage des facteurs utiles")
+    sep("3) Assemblage")
     acc = 1 % m
     first = True
     for kk in bits_desc:
         if first:
             acc = pow_vals[kk]
-            print(f"Start = a^(2^{kk}) ≡ {acc} [ {m} ]")
+            print("Start = a^(2^{}) ≡ {} [ {} ]".format(kk, acc, m))
             first = False
         else:
             before = acc
             acc = (acc * pow_vals[kk]) % m
-            print(f"acc = ({before} * {pow_vals[kk]}) mod {m} = {acc}")
+            print("acc = ({} * {}) mod {} = {}".format(before, pow_vals[kk], m, acc))
 
     sep("Résultat")
-    print(f"{a0}^{e0} mod {m} = {acc}")
+    print("{}^{} mod {} = {}".format(a0, e0, m, acc))
     return acc
 
-def pow_mod_fast(a, e, m):
-    if m <= 0:
-        return 0
-    a %= m
-    res = 1 % m
-    while e > 0:
-        if e & 1:
-            res = (res * a) % m
-        a = (a * a) % m
-        e >>= 1
-    return res
-
-def rsa_keygen_verbose(p, q, e, who=""):
-    sep(f"RSA - Génération de clés {who}".strip())
-    print(f"p = {p}, q = {q}, e = {e}")
-    n = p * q
-    phi = (p - 1) * (q - 1)
+def rsa_keygen_compact(p, q, e, who=""):
+    label = "RSA - Génération de clés {}".format(who).strip()
+    sep(label)
+    print("p = {}, q = {}, e = {}".format(p, q, e))
 
     sep("1) Calcul n et φ(n)")
-    print(f"n = p*q = {p}*{q} = {n}")
-    print(f"φ(n) = (p-1)(q-1) = ({p}-1)({q}-1) = {phi}")
+    n = p * q
+    phi = (p - 1) * (q - 1)
+    print("n = p*q = {}*{} = {}".format(p, q, n))
+    print("φ(n) = (p-1)(q-1) = ({}-1)({}-1) = {}".format(p, q, phi))
 
-    sep("2) Vérifier pgcd(e, φ(n)) = 1")
+    sep("2) Condition : pgcd(e, φ(n)) = 1")
     g = gcd(e, phi)
-    print(f"pgcd({e}, {phi}) = {g}")
+    print("pgcd({}, {}) = {}".format(e, phi, g))
     if g != 1:
         sep("Conclusion")
-        print("e n'est pas inversible modulo φ(n) => impossible de calculer d.")
+        print("e non inversible modulo φ(n) => impossible de calculer d.")
         return None
 
-    sep("3) Calcul d = e^(-1) mod φ(n) (étapes)")
-    ok, d = inv_mod_verbose(e, phi)
+    sep("3) Calcul d = e^-1 mod φ(n)")
+    ok, d = inv_mod_compact(e, phi)
     if not ok:
+        sep("Conclusion")
+        print("Impossible de calculer d (e non inversible).")
         return None
+    print("d ≡ e^-1 [φ(n)] = {}^-1 [ {} ] = {}".format(e, phi, d))
+    print("Vérif : ({}*{}) % {} = {}".format(e, d, phi, (e * d) % phi))
 
     sep("Clés")
-    print(f"Clé publique  (n, e) = ({n}, {e})")
-    print(f"Clé privée    (n, d) = ({n}, {d})")
+    print("Clé publique (n, e) = ({}, {})".format(n, e))
+    print("Clé privée   (n, d) = ({}, {})".format(n, d))
     return (n, e, d, phi)
 
-def rsa_encrypt_verbose(m, n, e):
+def rsa_encrypt_compact(m, n, e):
     sep("RSA - Chiffrement")
     print("Formule : c = m^e mod n")
-    print(f"m = {m}, e = {e}, n = {n}")
-    c = pow_mod_verbose(m, e, n)
+    print("m = {}, e = {}, n = {}".format(m, e, n))
+    c = pow_mod_compact(m, e, n, show_steps=True, title="Puissance modulaire")
+    sep("Résultat")
+    print("c = {}".format(c))
     return c
 
-def rsa_decrypt_verbose(c, n, d):
+def rsa_decrypt_compact(c, n, d):
     sep("RSA - Déchiffrement")
     print("Formule : m = c^d mod n")
-    print(f"c = {c}, d = {d}, n = {n}")
-    m = pow_mod_verbose(c, d, n)
+    print("c = {}, d = {}, n = {}".format(c, d, n))
+    m = pow_mod_compact(c, d, n, show_steps=True, title="Puissance modulaire")
+    sep("Résultat")
+    print("m = {}".format(m))
     return m
 
-def rsa_sign_verbose(m, nA, dA):
-    sep("RSA - Signature (Alice)")
+def rsa_sign_message_compact(m, nA, dA):
+    sep("RSA - Signature (sur m)")
     print("Signature : s = m^dA mod nA")
-    print(f"m = {m}, dA = {dA}, nA = {nA}")
-    s = pow_mod_verbose(m, dA, nA)
+    print("m = {}, dA = {}, nA = {}".format(m, dA, nA))
+    s = pow_mod_compact(m, dA, nA, show_steps=True, title="Puissance modulaire")
+    sep("Résultat")
+    print("s = {}".format(s))
     return s
 
-def rsa_verify_verbose(m, s, nA, eA):
-    sep("RSA - Vérification signature (Bob)")
-    print("Vérif : v = s^eA mod nA ; signature valide si v == m mod nA")
-    print(f"m = {m}, s = {s}, eA = {eA}, nA = {nA}")
-    v = pow_mod_verbose(s, eA, nA)
-    print(f"m mod nA = {m % nA}")
-    print(f"v        = {v}")
+def rsa_verify_message_compact(m, s, nA, eA):
+    sep("RSA - Vérification signature (sur m)")
+    print("Calcul : v = s^eA mod nA")
+    print("Signature valide si v == m mod nA")
+    print("m = {}, s = {}, eA = {}, nA = {}".format(m, s, eA, nA))
+    v = pow_mod_compact(s, eA, nA, show_steps=True, title="Puissance modulaire")
+    mm = m % nA
+    sep("Comparaison")
+    print("m mod nA = {}".format(mm))
+    print("v        = {}".format(v))
     sep("Conclusion")
-    if v == (m % nA):
-        print("Signature VALIDE ✅")
+    if v == mm:
+        print("Signature VALIDE")
         return True
     else:
-        print("Signature INVALIDE ❌")
+        print("Signature INVALIDE")
+        return False
+
+def rsa_sign_cipher_compact(c, nA, dA):
+    sep("RSA - Signature (sur c)")
+    print("Signature : sigma = c^dA mod nA")
+    print("c = {}, dA = {}, nA = {}".format(c, dA, nA))
+    sigma = pow_mod_compact(c, dA, nA, show_steps=True, title="Puissance modulaire")
+    sep("Résultat")
+    print("sigma = {}".format(sigma))
+    return sigma
+
+def rsa_verify_cipher_compact(c, sigma, nA, eA):
+    sep("RSA - Vérification signature (sur c)")
+    print("Calcul : v = sigma^eA mod nA")
+    print("Signature valide si v == c mod nA")
+    print("c = {}, sigma = {}, eA = {}, nA = {}".format(c, sigma, eA, nA))
+    v = pow_mod_compact(sigma, eA, nA, show_steps=True, title="Puissance modulaire")
+    cc = c % nA
+    sep("Comparaison")
+    print("c mod nA = {}".format(cc))
+    print("v        = {}".format(v))
+    sep("Conclusion")
+    if v == cc:
+        print("Signature VALIDE")
+        return True
+    else:
+        print("Signature INVALIDE")
         return False
 
 def main():
-    sep("CHAPITRE 3 - RSA complet (jusqu’à signature)")
-    print("On va générer les clés Alice et Bob avec (p,q,e).")
-    print("Ensuite : chiffrement, signature, vérification.")
-    print("\n⚠️ Rappel DS : il faut souvent m < n (et messages réduits mod n).")
+    sep("RSA complet (compact) : chiffrement + signature")
+    print("Paramètres : p, q, e pour Alice et Bob.")
+    print("Ensuite : calcul des clés, chiffrement, signature, vérification.")
 
     try:
         sep("Entrée paramètres ALICE")
@@ -208,102 +220,95 @@ def main():
         pB = int(input("pB = "))
         qB = int(input("qB = "))
         eB = int(input("eB = "))
-
-        m = int(input("\nMessage m = "))
     except:
         print("Entrée invalide.")
         return
 
-    keyA = rsa_keygen_verbose(pA, qA, eA, who="(Alice)")
+    keyA = rsa_keygen_compact(pA, qA, eA, who="(Alice)")
     if keyA is None:
         return
     nA, eA, dA, phiA = keyA
 
-    keyB = rsa_keygen_verbose(pB, qB, eB, who="(Bob)")
+    keyB = rsa_keygen_compact(pB, qB, eB, who="(Bob)")
     if keyB is None:
         return
     nB, eB, dB, phiB = keyB
 
-    sep("MENU RSA")
-    print("1) Chiffrer m pour Bob")
-    print("2) Déchiffrer un c (pour Bob)")
-    print("3) Signer m (Alice) + Vérifier (Bob)")
-    print("4) Chiffrer pour Bob ET signer le chiffré (comme dans ton ancien code)")
-    print("5) Signer puis chiffrer (m et la signature)")
-    print("6) Tout (démo complète)")
+    sep("MENU")
+    print("1) Chiffrer un message M pour Bob (confidentialité)")
+    print("2) Déchiffrer un message C avec la clé privée de Bob")
+    print("3) Signer un message m (Alice) et vérifier (Bob) (authenticité)")
+    print("4) Chiffrer m pour Bob puis signer le chiffré C(m) (cas classique : confidentiel + authentique)")
+    print("5) Démo complète : (4) + déchiffrement + vérification")
     ch = input("> Choix : ").strip()
 
     if ch == "1":
-        c = rsa_encrypt_verbose(m, nB, eB)
-        sep("Résultat")
-        print(f"c = {c}")
-
-    elif ch == "2":
         try:
-            c = int(input("c = "))
+            M = int(input("Message M = "))
         except:
             print("Entrée invalide.")
             return
-        m_back = rsa_decrypt_verbose(c, nB, dB)
-        sep("Résultat")
-        print(f"m = {m_back}")
+        rsa_encrypt_compact(M, nB, eB)
+
+    elif ch == "2":
+        try:
+            C = int(input("Chiffré C = "))
+        except:
+            print("Entrée invalide.")
+            return
+        rsa_decrypt_compact(C, nB, dB)
 
     elif ch == "3":
-        s = rsa_sign_verbose(m, nA, dA)
-        rsa_verify_verbose(m, s, nA, eA)
+        try:
+            m = int(input("Message m = "))
+        except:
+            print("Entrée invalide.")
+            return
+        s = rsa_sign_message_compact(m, nA, dA)
+        rsa_verify_message_compact(m, s, nA, eA)
 
     elif ch == "4":
-        sep("Étape A) Bob : chiffrement de m")
-        c = rsa_encrypt_verbose(m, nB, eB)
+        try:
+            m = int(input("Message m = "))
+        except:
+            print("Entrée invalide.")
+            return
 
-        sep("Étape B) Alice : signature du chiffré c")
-        print("Ici on signe le chiffré : sigma = c^dA mod nA")
-        sigma = pow_mod_verbose(c, dA, nA)
+        sep("A) Confidentialité : Bob chiffre/définit C(m)")
+        c = rsa_encrypt_compact(m, nB, eB)
 
-        sep("Résultats")
-        print(f"c      = {c}")
-        print(f"sigma  = {sigma}")
+        sep("B) Authenticité : Alice signe le chiffré")
+        sigma = rsa_sign_cipher_compact(c, nA, dA)
 
-        sep("Réception : vérification de la signature sur c")
-        print("Bob calcule v = sigma^eA mod nA, et compare à c mod nA")
-        v = pow_mod_verbose(sigma, eA, nA)
-        print(f"c mod nA = {c % nA}")
-        print(f"v        = {v}")
-        print("Conclusion :", "VALIDE ✅" if v == (c % nA) else "INVALIDE ❌")
+        sep("Résultats à envoyer à Bob")
+        print("C(m)  = {}".format(c))
+        print("sigma = {}".format(sigma))
 
-        sep("Puis Bob déchiffre c -> m")
-        m_back = rsa_decrypt_verbose(c, nB, dB)
-        print(f"m reçu = {m_back}")
+        sep("Réception Bob : vérifier la signature sur C(m)")
+        rsa_verify_cipher_compact(c, sigma, nA, eA)
 
     elif ch == "5":
-        sep("A) Alice signe le message : s = m^dA mod nA")
-        s = rsa_sign_verbose(m, nA, dA)
+        try:
+            m = int(input("Message m = "))
+        except:
+            print("Entrée invalide.")
+            return
 
-        sep("B) Bob doit recevoir (m, s) de façon confidentielle : on chiffre séparément")
-        print("On chiffre m et s avec la clé publique de Bob (nB,eB).")
-        c_m = rsa_encrypt_verbose(m, nB, eB)
-        c_s = rsa_encrypt_verbose(s, nB, eB)
+        sep("A) Chiffrement pour Bob")
+        c = rsa_encrypt_compact(m, nB, eB)
 
-        sep("C) Réception Bob : déchiffre puis vérifie")
-        m_recv = rsa_decrypt_verbose(c_m, nB, dB)
-        s_recv = rsa_decrypt_verbose(c_s, nB, dB)
-        rsa_verify_verbose(m_recv, s_recv, nA, eA)
+        sep("B) Signature (sur C(m)) par Alice")
+        sigma = rsa_sign_cipher_compact(c, nA, dA)
 
-    elif ch == "6":
-        sep("1) Chiffrement pour Bob")
-        c = rsa_encrypt_verbose(m, nB, eB)
-        print(f"c = {c}")
+        sep("C) Vérification signature par Bob")
+        ok = rsa_verify_cipher_compact(c, sigma, nA, eA)
 
-        sep("2) Déchiffrement par Bob")
-        m_back = rsa_decrypt_verbose(c, nB, dB)
-        print(f"m' = {m_back}")
+        sep("D) Déchiffrement par Bob")
+        m_back = rsa_decrypt_compact(c, nB, dB)
 
-        sep("3) Signature par Alice (sur m)")
-        s = rsa_sign_verbose(m, nA, dA)
-        print(f"s = {s}")
-
-        sep("4) Vérification par Bob")
-        rsa_verify_verbose(m, s, nA, eA)
+        sep("Conclusion finale")
+        print("Message déchiffré m' = {}".format(m_back))
+        print("Signature (sur C(m)) :", "VALIDE" if ok else "INVALIDE")
 
     else:
         print("Choix inconnu.")
